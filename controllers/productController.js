@@ -5,7 +5,7 @@ const fs = require("fs");
 
 exports.createProduct = async (req, res) => {
   try {
-    if (!req.file || !req.file.filename) {
+    if (!req.cloudinaryResult || !req.cloudinaryResult.secure_url) {
       return res
         .status(400)
         .json({ success: false, message: "Fotoğraf yüklenmeli" });
@@ -20,7 +20,7 @@ exports.createProduct = async (req, res) => {
     }
 
     const product = new Product({
-      image: req.file.filename,
+      image: req.cloudinaryResult.secure_url,
       name,
       price: Number(price),
       description,
@@ -38,42 +38,32 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Ürün güncelleme
 exports.updateProduct = async (req, res) => {
   try {
     const { id, name, price, description } = req.body;
 
     const product = await Product.findById(id);
     if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Ürün bulunamadı" });
+      return res.status(404).json({ success: false, message: "Ürün bulunamadı" });
     }
 
-    // Yeni fotoğraf yüklenmişse eskiyi silip yenisini koy
-    if (req.file) {
-      // Eski fotoğrafı sil
-      const oldPath = path.join(__dirname, "..", "uploads", product.image);
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
-      }
-      product.image = req.file.filename;
+    if (req.cloudinaryResult && req.cloudinaryResult.secure_url) {
+      product.image = req.cloudinaryResult.secure_url;
     }
 
     if (name) product.name = name;
-    if (price) product.price = price;
+    if (price) product.price = Number(price);
     if (description) product.description = description;
 
     await product.save();
+
     res.json({
       success: true,
       message: "Ürün başarıyla güncellendi",
       data: product,
     });
   } catch (err) {
-    res
-      .status(500)
-      .json({ success: false, message: "Sunucu hatası", error: err.message });
+    res.status(500).json({ success: false, message: "Sunucu hatası", error: err.message });
   }
 };
 
