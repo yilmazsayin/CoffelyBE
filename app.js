@@ -19,7 +19,7 @@ const authMiddleware = require("./middleware/authMiddleware");
 
 app.use(express.json());
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "https://coffely-fe.vercel.app",
   credentials: true,
 }))
 app.use(cookieParser());
