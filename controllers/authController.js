@@ -6,6 +6,7 @@ const VerificationCode = require("../models/VerificationCode");
 
 exports.register = async (req, res) => {
   try {
+    // 1. verificationCode'u buradan sildik
     const {
       firstName,
       lastName,
@@ -13,8 +14,8 @@ exports.register = async (req, res) => {
       password,
       address,
       phone,
-      verificationCode,
     } = req.body;
+    
     const exists = await User.findOne({ email });
     if (exists) {
       return res.status(400).json({
@@ -22,6 +23,7 @@ exports.register = async (req, res) => {
         message: "Bu e-posta adresi ile daha önce kayıt olunmuş.",
       });
     }
+    
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       firstName,
@@ -31,11 +33,11 @@ exports.register = async (req, res) => {
       address,
       phone,
     });
+    
     await user.save();
-    await VerificationCode.deleteOne({
-      code: verificationCode,
-      type: "register",
-    });
+    
+    // 2. VerificationCode.deleteOne(...) kısmını tamamen sildik
+
     res.status(201).json({
       success: true,
       message: "Kayıt işlemi başarılı. Giriş yapabilirsiniz.",
