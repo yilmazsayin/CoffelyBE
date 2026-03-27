@@ -12,7 +12,12 @@ const cacheProduct = async (req, res, next) => {
     const cached = await client.get(`product:${id}`);
     if (cached) {
       console.log("🧠 Redis'ten geldi");
-      return res.json(JSON.parse(cached));
+      // Frontend'in beklediği success: true yapısını ekledik
+      return res.json({
+        success: true,
+        message: "Ürün başarıyla getirildi (cache).",
+        data: JSON.parse(cached)
+      });
     }
     next();
   } catch (err) {
@@ -24,13 +29,16 @@ const cacheProduct = async (req, res, next) => {
 const authMiddleware = require("../middleware/authMiddleware");
 const uploadMiddleware = require('../middleware/uploadMiddleware')
 
+// 1. HERKESE AÇIK ROTALAR (Giriş yapmadan erişilebilenler)
 router.get("/list", getAllProducts);
+router.get("/:id", cacheProduct, getProductById); // Bu satırı güvenlik duvarının üstüne taşıdık!
 
+// --- GÜVENLİK DUVARI (Bundan sonrakiler için giriş şart) ---
 router.use(authMiddleware);
 
+// 2. SADECE YETKİLİ ROTALAR
 router.post("/create", uploadMiddleware, createProduct);
 router.put("/update", uploadMiddleware, updateProduct);
 router.post("/delete", deleteProduct);
-router.get("/:id", cacheProduct, getProductById);
 
 module.exports = router;
